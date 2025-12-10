@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Random;
 import javax.swing.*;
 
-public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
+public class Pacman extends JPanel implements ActionListener,KeyListener{
 
     class Block{
         int x;
@@ -59,17 +59,23 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
         void updateVelocity(){
             if(this.direction=='W'){
                 velocityX=0;
-                velocityY=-tileSize/4;
+                velocityY=-tileSize/8;
             }else if(this.direction=='S'){
                 velocityX=0;
-                velocityY=+tileSize/4;
+                velocityY=+tileSize/8;
             }else if(this.direction=='A'){
-                velocityX=-tileSize/4;
+                velocityX=-tileSize/8;
                 velocityY=0;
             }else if(this.direction=='D'){
-                velocityX=+tileSize/4;
+                velocityX=+tileSize/8;
                 velocityY=0;
             }
+        }
+        void reset(){
+            this.x=startX;
+            this.y=startY;
+            this.velocityX=0;
+            this.velocityY=0;
         }
     }
 
@@ -98,8 +104,11 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
     Timer gameLoop;
     char directions[]={'W','A','S','D'};//WASD
     Random rand=new Random();
+    int score=0;
+    int lives=3;
+    boolean gameOver=false;
 
-    theGoodBoi() {
+    Pacman() {
         setPreferredSize(new Dimension(boardWidth, boardHeight));
         setBackground(Color.BLACK);
         addKeyListener(this);
@@ -124,19 +133,19 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
             char newDirection=directions[rand.nextInt(directions.length)];
             ghost.updateDirection(newDirection);
         }
-        gameLoop = new Timer(50,this);//20fps,(1000ms/50ms)
+        gameLoop = new Timer(33,this);//≈60fps,(1000ms/16ms)
         gameLoop.start();
     }
     //X = wall, O = skip, P = pac man, ' ' = food
     //Ghosts: b = blue, o = orange, p = pink, r = red
     private String[] tileMap = {
-            "XXXXXXXXXXXXXXXXXXX",
+            "X XX XXXXXX XX XX X",
             "X        X        X",
             "X XX XXX X XXX XX X",
             "X                 X",
             "X XX X XXXXX X XX X",
             "X    X       X    X",
-            "XXXX XXxbxxx   XXXX",
+            "XXXX XXxbxxxXX XXXX",
             "OOOX   x x p   XOOO",
             "XXXX   xxxxx   XXXX",
             "O      r x x      O",
@@ -150,7 +159,7 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
             "X    X   X   X    X",
             "X XXXXXX X XXXXXX X",
             "X                 X",
-            "XXXXXXXXXXXXXXXXXXX"
+            "X XX XX XXXXXX XX X"
     };
 
     public void loadMap(){
@@ -201,33 +210,55 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
     public void draw(Graphics g){
         g.drawImage(pacman.image,pacman.x, pacman.y,  pacman.width, pacman.height,null);
 
-        for(Block wall:walls) g.drawImage(wall.image, wall.x, wall.y, wall.width, wall.height, null);
+        //for(Block wall:walls) g.drawImage(wall.image, wall.x, wall.y, wall.width, wall.height, null);
 
         for(Block ghost:ghosts) g.drawImage(ghost.image, ghost.x, ghost.y, ghost.width, ghost.height, null);
 
         g.setColor(Color.WHITE);
         for(Block food:foods) g.fillRect(food.x, food.y, food.width, food.height);
 
-        g.setColor(Color.RED);
-        for(Block wall:redWalls) g.fillRect(wall.x, wall.y, wall.width - 4, wall.height - 4);
+        for(Block wall:walls) g.fillRect(wall.x+4, wall.y+4, wall.width - 8, wall.height - 8);
 
+        g.setColor(Color.RED);
+        for(Block wall:redWalls) g.fillRect(wall.x+4, wall.y+4, wall.width - 8, wall.height - 8);
+
+        //score
+        g.setFont(new Font("Times New Roman", Font.BOLD, 15));
+        if(gameOver){
+            //g.setColor(Color.RED);
+            g.drawString("GAME OVER\nSCORE: "+String.valueOf(score), boardWidth*tileSize/2, boardHeight*tileSize/2);
+        }else{
+            //g.setColor(Color.RED);
+            g.drawString("x"+String.valueOf(lives)+" Score: "+String.valueOf(score), tileSize/4, tileSize/2);
+        }
     }
 
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         move();
         repaint();
+        if(gameOver){
+            gameLoop.stop();
+        }
     }
 
     public void move(){
         pacman.x+=pacman.velocityX;
         pacman.y+=pacman.velocityY;
 
+        if(pacman.x<=0) pacman.x=(boardWidth-1*tileSize)+pacman.x;
+        if(pacman.x>boardWidth) pacman.x=0;
+        if(pacman.y<=0) pacman.y=(boardHeight-1*tileSize)+pacman.y;
+        if(pacman.y>boardHeight) pacman.y=0;
         //check all the walls for collisions; since they are mapped to a hashset lookup takes up constant time, hence collisions are search for efficiently
         for(Block wall:walls)
             if (collision(pacman, wall)) {
                 pacman.x -= pacman.velocityX;
                 pacman.y -= pacman.velocityY;
+                if(pacman.x<=0) pacman.x=(boardWidth-1*tileSize)+pacman.x;
+                if(pacman.x>boardWidth) pacman.x=0;
+                if(pacman.y<=0) pacman.y=(boardHeight-1*tileSize)+pacman.y;
+                if(pacman.y>boardHeight) pacman.y=0;
                 //pacman.updateDirection(pacman.prevDirection);makes pacman bounce back
                 break;//since pacman only moves one position at a time/per gameloop/per frame
             }
@@ -235,32 +266,66 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
             if (collision(pacman, wall)) {
                 pacman.x -= pacman.velocityX;
                 pacman.y -= pacman.velocityY;
+                if(pacman.x<=0) pacman.x=(boardWidth-1*tileSize)+pacman.x;
+                if(pacman.x>boardWidth) pacman.x=0;
+                if(pacman.y<=0) pacman.y=(boardHeight-1*tileSize)+pacman.y;
+                if(pacman.y>boardHeight) pacman.y=0;
                 //pacman.updateDirection(pacman.prevDirection);makes pacman bounce back
                 break;//since pacman only moves one position at a time/per gameloop/per frame
             }
 
         //check for ghost collisions
         for(Block ghost:ghosts){
+            if(collision(pacman, ghost)) {
+                lives-=1;
+                resetPositions();
+            }
+            if(lives<=0){
+                gameOver=true;
+                return;
+            }
             ghost.x+=ghost.velocityX;
             ghost.y+=ghost.velocityY;
-            for(Block wall:walls)
+            if(ghost.x<=0) ghost.x=(boardWidth-1*tileSize)+ghost.x;
+            if(ghost.x>boardWidth) ghost.x=0;
+            if(ghost.y<=0) ghost.y=(boardHeight-1*tileSize)+ghost.y;
+            if(ghost.y>boardHeight) ghost.y=0;
+            for(Block wall:walls) {
                 if (collision(ghost, wall)) {
                     ghost.x -= ghost.velocityX;
                     ghost.y -= ghost.velocityY;
-                    char newDirection=directions[rand.nextInt(directions.length)];
+                    if (ghost.x <= 0) ghost.x = (boardWidth - 1 * tileSize) + ghost.x;
+                    if (ghost.x > boardWidth) ghost.x = 0;
+                    if (ghost.y <= 0) ghost.y = (boardHeight - 1 * tileSize) + ghost.y;
+                    if (ghost.y > boardHeight) ghost.y = 0;
+                    char newDirection = directions[rand.nextInt(directions.length)];
                     ghost.updateDirection(newDirection);
                     //pacman.updateDirection(pacman.prevDirection);makes pacman bounce back
                     break;//since pacman only moves one position at a time/per gameloop/per frame
                 }
-            for(Block wall:redWalls)
+            }
+            for(Block wall:redWalls) {
                 if (collision(ghost, wall)) {
                     ghost.x -= ghost.velocityX;
                     ghost.y -= ghost.velocityY;
-                    char newDirection=directions[rand.nextInt(directions.length)];
+                    if (ghost.x > boardWidth) ghost.x = 0;
+                    if (ghost.y <= 0) ghost.y = (boardHeight - 1 * tileSize) + ghost.y;
+                    if (ghost.y > boardHeight) ghost.y = 0;
+                    char newDirection = directions[rand.nextInt(directions.length)];
                     ghost.updateDirection(newDirection);
                     //pacman.updateDirection(pacman.prevDirection);makes pacman bounce back
                     break;//since pacman only moves one position at a time/per gameloop/per frame
                 }
+            }
+        }
+
+        //food collisions
+        for(Block food:foods){
+            if (collision(pacman, food)) {
+                foods.remove(food);
+                score+=100;
+                break;
+            }
         }
     }
 
@@ -268,10 +333,17 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
         return a.x<b.x+b.width && a.y<b.y+b.height && a.x+a.width>b.x && a.y+a.height>b.y;
     }
 
-    @Override
-    public void keyTyped(KeyEvent keyEvent) {
-
+    public void resetPositions(){
+        pacman.reset();
+        for(Block ghost:ghosts){
+            ghost.reset();
+            char newDirection = directions[rand.nextInt(directions.length)];
+            ghost.updateDirection(newDirection);
+        }
     }
+
+    @Override
+    public void keyTyped(KeyEvent keyEvent) {}
 
     @Override
     public void keyPressed(KeyEvent keyEvent) {}

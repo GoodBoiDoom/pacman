@@ -14,7 +14,7 @@ public class app {
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        theGoodBoi game=new theGoodBoi();
+        Pacman game=new Pacman();
         frame.add(game);
         frame.pack();
         game.requestFocus();
