@@ -2,6 +2,7 @@ package pacman;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.HashSet;
+import java.util.Random;
 import javax.swing.*;
 
 public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
@@ -16,7 +17,7 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
         int startX;
         int startY;
 
-        char direction='U';
+        char direction='W';//WASD
         int velocityX=0;
         int velocityY=0;
 
@@ -31,8 +32,29 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
         }
 
         void updateDirection(char direction){
+            char prevDirection=this.direction;;
             this.direction=direction;
             updateVelocity();
+            this.x+=this.velocityX;
+            this.y+=this.velocityY;
+            for(Block wall:walls)
+                if (collision(this, wall)) {
+                    this.x -= this.velocityX;
+                    this.y -= this.velocityY;
+                    this.direction = prevDirection;
+                    updateVelocity();
+                    //pacman.updateDirection(pacman.prevDirection);makes pacman bounce back
+                    break;//since pacman only moves one position at a time/per gameloop/per frame
+                }
+            for(Block wall:redWalls)
+                if (collision(this, wall)) {
+                    this.x -= this.velocityX;
+                    this.y -= this.velocityY;
+                    //pacman.updateDirection(pacman.prevDirection);makes pacman bounce back
+                    break;//since pacman only moves one position at a time/per gameloop/per frame
+                }
+            this.x -= this.velocityX;
+            this.y -= this.velocityY;
         }
         void updateVelocity(){
             if(this.direction=='W'){
@@ -74,6 +96,8 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
     Block pacman;
 
     Timer gameLoop;
+    char directions[]={'W','A','S','D'};//WASD
+    Random rand=new Random();
 
     theGoodBoi() {
         setPreferredSize(new Dimension(boardWidth, boardHeight));
@@ -96,6 +120,10 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
         blueGhostImage = new ImageIcon(getClass().getResource("/blueGhost.png")).getImage();
 
         loadMap();
+        for(Block ghost:ghosts){
+            char newDirection=directions[rand.nextInt(directions.length)];
+            ghost.updateDirection(newDirection);
+        }
         gameLoop = new Timer(50,this);//20fps,(1000ms/50ms)
         gameLoop.start();
     }
@@ -131,40 +159,38 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
         ghosts=new HashSet<Block>();
         redWalls=new HashSet<Block>();
 
-        for(int r=0;r<rowCount;r++){
-            for(int c = 0; c< columnCount; c++){
-                String row=tileMap[r];
-                char tileMapchar=row.charAt(c);
+        for(int r=0;r<rowCount;r++)
+            for (int c = 0; c < columnCount; c++) {
+                String row = tileMap[r];
+                char tileMapchar = row.charAt(c);
 
-                int x=c*tileSize;
-                int y=r*tileSize;
+                int x = c * tileSize;
+                int y = r * tileSize;
 
-                if(tileMapchar=='X'){//Block Wall
-                    Block wall=new Block(wallImage,x,y,tileSize,tileSize);
+                if (tileMapchar == 'X') {//Block Wall
+                    Block wall = new Block(wallImage, x, y, tileSize, tileSize);
                     walls.add(wall);
-                }else if(tileMapchar=='x'){//Block Wall
-                    Block redWall=new Block(null,x,y,tileSize,tileSize);
+                } else if (tileMapchar == 'x') {//Block Wall
+                    Block redWall = new Block(null, x, y, tileSize, tileSize);
                     redWalls.add(redWall);
-                }else if(tileMapchar=='b'){//Blue Ghost
-                    Block ghost=new Block(blueGhostImage,x,y,tileSize,tileSize);
+                } else if (tileMapchar == 'b') {//Blue Ghost
+                    Block ghost = new Block(blueGhostImage, x, y, tileSize, tileSize);
                     ghosts.add(ghost);
-                }else if(tileMapchar=='p'){//Pink Ghost
-                    Block ghost=new Block(pinkGhostImage,x,y,tileSize,tileSize);
+                } else if (tileMapchar == 'p') {//Pink Ghost
+                    Block ghost = new Block(pinkGhostImage, x, y, tileSize, tileSize);
                     ghosts.add(ghost);
-                }else if(tileMapchar=='o'){//Orange ""
-                    Block ghost=new Block(orangeGhostImage,x,y,tileSize,tileSize);
+                } else if (tileMapchar == 'o') {//Orange ""
+                    Block ghost = new Block(orangeGhostImage, x, y, tileSize, tileSize);
                     ghosts.add(ghost);
-                }else if(tileMapchar=='r'){//Red ""
-                    Block ghost=new Block(redGhostImage,x,y,tileSize,tileSize);
+                } else if (tileMapchar == 'r') {//Red ""
+                    Block ghost = new Block(redGhostImage, x, y, tileSize, tileSize);
                     ghosts.add(ghost);
-                }else if(tileMapchar=='P'){
-                    pacman=new Block(pacmanRightImage,x,y,tileSize,tileSize);
-                }else if(tileMapchar==' '){
-                    Block food=new Block(null,x+14,y+14,4,4);
+                } else if (tileMapchar == 'P') pacman = new Block(pacmanRightImage, x, y, tileSize, tileSize);
+                else if (tileMapchar == ' ') {
+                    Block food = new Block(null, x + 14, y + 14, 4, 4);
                     foods.add(food);
                 }
             }
-        }
     }
 
     public void paintComponent(Graphics g){
@@ -175,23 +201,15 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
     public void draw(Graphics g){
         g.drawImage(pacman.image,pacman.x, pacman.y,  pacman.width, pacman.height,null);
 
-        for(Block wall:walls){
-            g.drawImage(wall.image,wall.x, wall.y,  wall.width, wall.height,null);
-        }
+        for(Block wall:walls) g.drawImage(wall.image, wall.x, wall.y, wall.width, wall.height, null);
 
-        for(Block ghost:ghosts){
-            g.drawImage(ghost.image,ghost.x, ghost.y,  ghost.width, ghost.height,null);
-        }
+        for(Block ghost:ghosts) g.drawImage(ghost.image, ghost.x, ghost.y, ghost.width, ghost.height, null);
 
         g.setColor(Color.WHITE);
-        for(Block food:foods){
-            g.fillRect(food.x, food.y,  food.width, food.height);
-        }
+        for(Block food:foods) g.fillRect(food.x, food.y, food.width, food.height);
 
         g.setColor(Color.RED);
-        for(Block wall:redWalls){
-            g.fillRect(wall.x, wall.y,  wall.width-4, wall.height-4);
-        }
+        for(Block wall:redWalls) g.fillRect(wall.x, wall.y, wall.width - 4, wall.height - 4);
 
     }
 
@@ -204,10 +222,50 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
     public void move(){
         pacman.x+=pacman.velocityX;
         pacman.y+=pacman.velocityY;
+
+        //check all the walls for collisions; since they are mapped to a hashset lookup takes up constant time, hence collisions are search for efficiently
+        for(Block wall:walls)
+            if (collision(pacman, wall)) {
+                pacman.x -= pacman.velocityX;
+                pacman.y -= pacman.velocityY;
+                //pacman.updateDirection(pacman.prevDirection);makes pacman bounce back
+                break;//since pacman only moves one position at a time/per gameloop/per frame
+            }
+        for(Block wall:redWalls)
+            if (collision(pacman, wall)) {
+                pacman.x -= pacman.velocityX;
+                pacman.y -= pacman.velocityY;
+                //pacman.updateDirection(pacman.prevDirection);makes pacman bounce back
+                break;//since pacman only moves one position at a time/per gameloop/per frame
+            }
+
+        //check for ghost collisions
+        for(Block ghost:ghosts){
+            ghost.x+=ghost.velocityX;
+            ghost.y+=ghost.velocityY;
+            for(Block wall:walls)
+                if (collision(ghost, wall)) {
+                    ghost.x -= ghost.velocityX;
+                    ghost.y -= ghost.velocityY;
+                    char newDirection=directions[rand.nextInt(directions.length)];
+                    ghost.updateDirection(newDirection);
+                    //pacman.updateDirection(pacman.prevDirection);makes pacman bounce back
+                    break;//since pacman only moves one position at a time/per gameloop/per frame
+                }
+            for(Block wall:redWalls)
+                if (collision(ghost, wall)) {
+                    ghost.x -= ghost.velocityX;
+                    ghost.y -= ghost.velocityY;
+                    char newDirection=directions[rand.nextInt(directions.length)];
+                    ghost.updateDirection(newDirection);
+                    //pacman.updateDirection(pacman.prevDirection);makes pacman bounce back
+                    break;//since pacman only moves one position at a time/per gameloop/per frame
+                }
+        }
     }
 
-    public boolean collision(){
-        return false;
+    public boolean collision(Block a, Block b){
+        return a.x<b.x+b.width && a.y<b.y+b.height && a.x+a.width>b.x && a.y+a.height>b.y;
     }
 
     @Override
@@ -222,16 +280,19 @@ public class theGoodBoi extends JPanel implements ActionListener,KeyListener{
     public void keyReleased(KeyEvent keyEvent) {
         //System.out.println("KeyEvent: "+KeyEvent.getKeyText(keyEvent.getKeyCode()) );
         //four directions WASD
-        if(keyEvent.getKeyCode()==KeyEvent.VK_UP){
-            pacman.updateDirection('W');
-        }else if(keyEvent.getKeyCode()==KeyEvent.VK_DOWN){
-            pacman.updateDirection('S');
-        }else if(keyEvent.getKeyCode()==KeyEvent.VK_LEFT){
-            pacman.updateDirection('A');
-        }else if(keyEvent.getKeyCode()==KeyEvent.VK_RIGHT){
-            pacman.updateDirection('D');
-        }
+        if(keyEvent.getKeyCode()==KeyEvent.VK_UP) pacman.updateDirection('W');
+        else if(keyEvent.getKeyCode()==KeyEvent.VK_DOWN) pacman.updateDirection('S');
+        else if(keyEvent.getKeyCode()==KeyEvent.VK_LEFT) pacman.updateDirection('A');
+        else if(keyEvent.getKeyCode()==KeyEvent.VK_RIGHT) pacman.updateDirection('D');
 
+        if(pacman.direction=='W')
+            pacman.image=pacmanUpImage;
+        else if(pacman.direction=='S')
+            pacman.image=pacmanDownImage;
+        else if(pacman.direction=='A')
+            pacman.image=pacmanLeftImage;
+        else if(pacman.direction=='D')
+            pacman.image=pacmanRightImage;
     }
 
 }
