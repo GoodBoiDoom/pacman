@@ -208,26 +208,34 @@ public class Pacman extends JPanel implements ActionListener,KeyListener{
     }
 
     public void draw(Graphics g){
-        g.drawImage(pacman.image,pacman.x, pacman.y,  pacman.width, pacman.height,null);
 
-        //for(Block wall:walls) g.drawImage(wall.image, wall.x, wall.y, wall.width, wall.height, null);
-
-        for(Block ghost:ghosts) g.drawImage(ghost.image, ghost.x, ghost.y, ghost.width, ghost.height, null);
-
-        g.setColor(Color.WHITE);
-        for(Block food:foods) g.fillRect(food.x, food.y, food.width, food.height);
-
-        for(Block wall:walls) g.fillRect(wall.x+4, wall.y+4, wall.width - 8, wall.height - 8);
-
-        g.setColor(Color.RED);
-        for(Block wall:redWalls) g.fillRect(wall.x+4, wall.y+4, wall.width - 8, wall.height - 8);
 
         //score
         g.setFont(new Font("Times New Roman", Font.BOLD, 15));
         if(gameOver){
-            //g.setColor(Color.RED);
-            g.drawString("GAME OVER\nSCORE: "+String.valueOf(score), boardWidth*tileSize/2, boardHeight*tileSize/2);
+            g.setColor(Color.RED);
+            g.setFont(new Font("Chiller", Font.BOLD, 50));
+            g.drawString("GAME OVER!!!",boardWidth/4, boardHeight/2-tileSize*2);
+            g.setFont(new Font("Chiller", Font.BOLD, 30));
+            g.setColor(Color.WHITE);
+            g.drawString("SCORE: "+String.valueOf(score), boardWidth/3, boardHeight/2-tileSize/2);
+            g.setFont(new Font("Chiller", Font.BOLD, 20));
+            g.setColor(Color.GREEN);
+            g.drawString("Press ANY key to restart the game!", boardWidth/4, boardHeight/2+tileSize/2);
         }else{
+            g.drawImage(pacman.image,pacman.x, pacman.y,  pacman.width, pacman.height,null);
+
+            //for(Block wall:walls) g.drawImage(wall.image, wall.x, wall.y, wall.width, wall.height, null);
+
+            for(Block ghost:ghosts) g.drawImage(ghost.image, ghost.x, ghost.y, ghost.width, ghost.height, null);
+
+            g.setColor(Color.WHITE);
+            for(Block food:foods) g.fillRect(food.x, food.y, food.width, food.height);
+
+            for(Block wall:walls) g.fillRect(wall.x+4, wall.y+4, wall.width - 8, wall.height - 8);
+
+            g.setColor(Color.RED);
+            for(Block wall:redWalls) g.fillRect(wall.x+4, wall.y+4, wall.width - 8, wall.height - 8);
             //g.setColor(Color.RED);
             g.drawString("x"+String.valueOf(lives)+" Score: "+String.valueOf(score), tileSize/4, tileSize/2);
         }
@@ -327,6 +335,10 @@ public class Pacman extends JPanel implements ActionListener,KeyListener{
                 break;
             }
         }
+        if(foods.isEmpty()){
+            loadMap();
+            resetPositions();
+        }
     }
 
     public boolean collision(Block a, Block b){
@@ -350,6 +362,16 @@ public class Pacman extends JPanel implements ActionListener,KeyListener{
 
     @Override
     public void keyReleased(KeyEvent keyEvent) {
+
+        if(gameOver){
+            loadMap();
+            resetPositions();
+            lives=3;
+            score=0;
+            gameOver=false;
+            gameLoop.start();
+        }
+
         //System.out.println("KeyEvent: "+KeyEvent.getKeyText(keyEvent.getKeyCode()) );
         //four directions WASD
         if(keyEvent.getKeyCode()==KeyEvent.VK_UP) pacman.updateDirection('W');
