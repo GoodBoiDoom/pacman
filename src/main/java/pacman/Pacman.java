@@ -32,7 +32,7 @@ public class Pacman extends JPanel implements ActionListener,KeyListener{
         }
 
         void updateDirection(char direction){
-            char prevDirection=this.direction;;
+            char prevDirection=this.direction;
             this.direction=direction;
             updateVelocity();
             this.x+=this.velocityX;
@@ -85,6 +85,7 @@ public class Pacman extends JPanel implements ActionListener,KeyListener{
     int boardHeight= rowCount *tileSize;
 
     private Image wallImage;
+    private Image redWallImage;
     private Image blueGhostImage;
     private Image redGhostImage;
     private Image pinkGhostImage;
@@ -117,6 +118,7 @@ public class Pacman extends JPanel implements ActionListener,KeyListener{
         //setBackground();
         //loading images
         wallImage = new ImageIcon(getClass().getResource("/wall.png")).getImage();
+        redWallImage=new ImageIcon(getClass().getResource("/redWall.png")).getImage();
 
         pacmanDownImage = new ImageIcon(getClass().getResource("/pacmanDown.png")).getImage();
         pacmanUpImage = new ImageIcon(getClass().getResource("/pacmanUp.png")).getImage();
@@ -180,7 +182,7 @@ public class Pacman extends JPanel implements ActionListener,KeyListener{
                     Block wall = new Block(wallImage, x, y, tileSize, tileSize);
                     walls.add(wall);
                 } else if (tileMapchar == 'x') {//Block Wall
-                    Block redWall = new Block(null, x, y, tileSize, tileSize);
+                    Block redWall = new Block(redWallImage, x, y, tileSize, tileSize);
                     redWalls.add(redWall);
                 } else if (tileMapchar == 'b') {//Blue Ghost
                     Block ghost = new Block(blueGhostImage, x, y, tileSize, tileSize);
@@ -225,18 +227,18 @@ public class Pacman extends JPanel implements ActionListener,KeyListener{
         }else{
             g.drawImage(pacman.image,pacman.x, pacman.y,  pacman.width, pacman.height,null);
 
-            //for(Block wall:walls) g.drawImage(wall.image, wall.x, wall.y, wall.width, wall.height, null);
+            for(Block wall:walls) g.drawImage(wall.image, wall.x+4, wall.y+4, wall.width - 8, wall.height - 8, null);
 
             for(Block ghost:ghosts) g.drawImage(ghost.image, ghost.x, ghost.y, ghost.width, ghost.height, null);
 
             g.setColor(Color.WHITE);
             for(Block food:foods) g.fillRect(food.x, food.y, food.width, food.height);
 
-            for(Block wall:walls) g.fillRect(wall.x+4, wall.y+4, wall.width - 8, wall.height - 8);
+            //for(Block wall:walls) g.fillRect(wall.x+4, wall.y+4, wall.width - 8, wall.height - 8);
+
+            for(Block wall:redWalls)g.drawImage(wall.image, wall.x+4, wall.y+4, wall.width - 8, wall.height - 8, null);
 
             g.setColor(Color.RED);
-            for(Block wall:redWalls) g.fillRect(wall.x+4, wall.y+4, wall.width - 8, wall.height - 8);
-            //g.setColor(Color.RED);
             g.drawString("x"+String.valueOf(lives)+" Score: "+String.valueOf(score), tileSize/4, tileSize/2);
         }
     }
