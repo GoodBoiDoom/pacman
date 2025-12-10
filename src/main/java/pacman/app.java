@@ -2,7 +2,7 @@ package pacman;
 import javax.swing.JFrame;
 public class app {
     public static void main(String[] args) {
-        int row=21,column=19;
+        int row=22,column=19;
         int tileSize=32;
         int boardWidth=column*tileSize;
         int boardHeight=row*tileSize;
